@@ -1,0 +1,3091 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Workshop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&family=Nunito:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            font-size: 16px;
+            --k8s: #326ce5;
+            --k8s-dark: #1a3f9c;
+            --k8s-light: #d6e4ff;
+            --dark: #0f1117;
+            --gray-1: #f7f8fc;
+            --gray-2: #eaecf4;
+            --gray-3: #c8cde0;
+            --text: #0f1117;
+            --text-muted: #5a6080;
+            --accent2: #ff5d5d;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --font-head: 'Archivo', sans-serif;
+            --font-body: 'Nunito', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #fff;
+            color: var(--text);
+            height: 100%;
+            line-height: 1.4;
+        }
+
+        #progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--k8s);
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.2s ease;
+        }
+
+        #nav-dots {
+            position: fixed;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 999;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gray-3);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .dot.active {
+            background: var(--k8s);
+            transform: scale(1.4);
+        }
+
+        .slide {
+            scroll-snap-align: start;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2.5rem 2.5rem 2rem 2rem;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+
+        /* SLIDE HEADER */
+        .slide-header {
+            position: absolute;
+            top: 0.85rem;
+            left: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slide-num {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            background: var(--gray-2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+        }
+
+        .slide-section {
+            font-family: var(--font-head);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--k8s);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .slide-title {
+            font-family: var(--font-head);
+            font-size: clamp(1.8rem, 3.5vw, 3rem);
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1.05;
+        }
+
+        .slide-title span {
+            color: var(--k8s);
+        }
+
+        /* LAYOUT */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1300px;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.2rem;
+            width: 100%;
+            max-width: 1300px;
+        }
+
+        .full-width {
+            width: 100%;
+            max-width: 1300px;
+        }
+
+        .col-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .slide-light {
+            background: #fff;
+        }
+
+        .slide-gray {
+            background: var(--gray-1);
+        }
+
+        /* COVER */
+        .slide-cover {
+            background: var(--dark);
+            padding: 0;
+        }
+
+        .cover-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cover-left {
+            background: var(--k8s);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3.5rem 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-left::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            border: 70px solid rgba(255, 255, 255, 0.07);
+            bottom: -130px;
+            right: -130px;
+        }
+
+        .cover-left::after {
+            content: '';
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 35px solid rgba(255, 255, 255, 0.05);
+            top: 30px;
+            right: 50px;
+        }
+
+        .k8s-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .k8s-logo-wrap img {
+            width: 72px;
+            height: 72px;
+            filter: brightness(0) invert(1);
+        }
+
+        .cover-tag {
+            font-family: var(--font-mono);
+            font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+        }
+
+        .cover-title {
+            font-family: var(--font-head);
+            font-size: clamp(3rem, 5.5vw, 4.8rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 1.2rem;
+        }
+
+        .cover-subtitle {
+            font-family: var(--font-head);
+            font-size: clamp(1.2rem, 2vw, 1.6rem);
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .cover-right {
+            background: var(--dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3.5rem;
+            gap: 2.2rem;
+        }
+
+        .cover-stat {
+            border-left: 3px solid var(--k8s);
+            padding-left: 1.5rem;
+        }
+
+        .cover-stat-num {
+            font-family: var(--font-head);
+            font-size: clamp(2rem, 3.2vw, 3rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .cover-stat-label {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.3rem;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            background: rgba(50, 108, 229, 0.18);
+            color: #7ca6ff;
+            border: 1px solid rgba(50, 108, 229, 0.35);
+            padding: 0.4rem 0.85rem;
+            border-radius: 4px;
+        }
+
+        /* CNCF SLIDE */
+        .cncf-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+            text-align: center;
+        }
+
+        .cncf-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .cncf-heading-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .cncf-title-logo {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .cncf-title {
+            font-family: var(--font-head);
+            font-size: clamp(2.2rem, 4vw, 4rem);
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1.05;
+            max-width: 15ch;
+        }
+
+        .cncf-title span {
+            color: var(--k8s);
+        }
+
+        .cncf-description {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 1.5vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .cncf-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-top: 0.25rem;
+            width: 100%;
+            max-width: 560px;
+            flex: 0 1 560px;
+            align-items: flex-start;
+        }
+
+        .cncf-links-qr-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            width: 100%;
+            max-width: 820px;
+            margin-top: 0.25rem;
+        }
+
+        .cncf-link {
+            display: block;
+            width: 100%;
+            padding: 0.95rem 1.1rem;
+            border-radius: 12px;
+            font-family: var(--font-mono);
+            font-size: clamp(0.82rem, 1.2vw, 1rem);
+            font-weight: 400;
+            text-decoration: none;
+            border: 1.5px solid var(--gray-2);
+            background: #fff;
+            color: var(--k8s-dark);
+            word-break: break-word;
+            text-align: left;
+        }
+
+        .cncf-qr-wrap {
+            margin-top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.55rem;
+            flex: 0 0 150px;
+        }
+
+        .cncf-qr {
+            width: clamp(120px, 14vw, 170px);
+            height: auto;
+            border-radius: 12px;
+            border: 1.5px solid var(--gray-2);
+            background: #fff;
+            padding: 0.4rem;
+            box-shadow: 0 10px 20px rgba(15, 17, 23, 0.08);
+        }
+
+        .cncf-qr-caption {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        @media (max-width: 900px) {
+            .cncf-links-qr-row {
+                flex-direction: column;
+            }
+
+            .cncf-links {
+                max-width: 100%;
+                flex: 1 1 auto;
+            }
+
+            .cncf-qr-wrap {
+                flex: 0 0 auto;
+            }
+        }
+
+        .cncf-logo-box {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--dark);
+            border-radius: 14px;
+            padding: 1.2rem 1.8rem;
+        }
+
+        .cncf-logo-text {
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .cncf-image-wrap {
+            width: 100%;
+            max-width: 1180px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1.5px solid var(--gray-2);
+            background: #fff;
+            box-shadow: 0 20px 40px rgba(15, 17, 23, 0.08);
+        }
+
+        .cncf-image {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .cncf-image-caption {
+            padding: 0.95rem 1.2rem;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--gray-2);
+            background: var(--gray-1);
+        }
+
+        .cncf-projects {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .cncf-projects-header {
+            grid-column: 1 / -1;
+            font-family: var(--font-head);
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0 0 0.4rem 0;
+        }
+
+        .cncf-project {
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            border: 1.5px solid var(--gray-2);
+            background: #fff;
+        }
+
+        .cncf-project-name {
+            font-family: var(--font-head);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .cncf-project-cat {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 0.15rem;
+        }
+
+        .cncf-project-desc {
+            font-family: var(--font-body);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        .graduated-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--green);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            margin-left: 0.4rem;
+            vertical-align: middle;
+        }
+
+        .incubating-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--amber);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            margin-left: 0.4rem;
+            vertical-align: middle;
+        }
+
+        /* CNCF footer button */
+        .cncf-projects-footer {
+            grid-column: 1 / -1;
+            display: block;
+            text-align: center;
+            margin-top: 1.25rem;
+        }
+
+        .cncf-btn {
+            display: inline-block;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background: var(--k8s);
+            color: #fff;
+            text-decoration: none;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+
+        /* OBJETIVOS */
+        .keyword-card {
+            background: #fff;
+            border: 1.5px solid var(--gray-2);
+            border-radius: 14px;
+            padding: 2rem 1.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .keyword-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--k8s);
+        }
+
+        .keyword-num {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .keyword-word {
+            font-family: var(--font-head);
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-weight: 900;
+            color: var(--k8s);
+            line-height: 1;
+        }
+
+        .keyword-desc {
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+
+        /* DOCKER DESKTOP */
+        .slide-warning {
+            background: #fff8f0;
+        }
+
+        .docker-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            width: 100%;
+            max-width: 1300px;
+            align-items: start;
+        }
+
+        .docker-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .docker-step {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 1.1rem 1.4rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .docker-step-num {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            margin-top: 0.1rem;
+        }
+
+        .docker-step-text {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .docker-step-cmd {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: #7ca6ff;
+            margin-top: 0.35rem;
+            background: rgba(50, 108, 229, 0.1);
+            border: 1px solid rgba(50, 108, 229, 0.2);
+            padding: 0.4rem 0.7rem;
+            border-radius: 5px;
+            display: block;
+        }
+
+        .docker-visual {
+            background: var(--dark);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .docker-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .docker-menu-icon {
+            font-size: 1.1rem;
+        }
+
+        .docker-menu-label {
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .docker-menu-active {
+            border-color: var(--k8s);
+            background: rgba(50, 108, 229, 0.1);
+        }
+
+        .docker-toggle {
+            margin-left: auto;
+            width: 38px;
+            height: 20px;
+            background: var(--k8s);
+            border-radius: 10px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .docker-toggle::after {
+            content: '';
+            position: absolute;
+            right: 3px;
+            top: 3px;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        .warning-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--amber);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        /* CLUSTER DIAGRAM */
+        .cluster-outer {
+            border: 2px dashed var(--k8s);
+            border-radius: 18px;
+            padding: 1.5rem;
+            width: 100%;
+            position: relative;
+        }
+
+        .cluster-label {
+            position: absolute;
+            top: -0.85rem;
+            left: 1.5rem;
+            background: var(--gray-1);
+            padding: 0 0.6rem;
+            font-family: var(--font-head);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--k8s);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .cluster-inner {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+        }
+
+        .node-box {
+            background: #fff;
+            border: 1.5px solid var(--gray-2);
+            border-radius: 12px;
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .node-title {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .node-chip {
+            display: inline-flex;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            background: var(--k8s-light);
+            color: var(--k8s-dark);
+            padding: 0.22rem 0.55rem;
+            border-radius: 4px;
+        }
+
+        .worker-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.9rem;
+        }
+
+        /* CONTROL PLANE */
+        .cp-diagram {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            border: 1.5px solid var(--gray-2);
+            border-radius: 14px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .cp-component {
+            padding: 1.3rem 1.1rem;
+            border-right: 1.5px solid var(--gray-2);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            background: #fff;
+        }
+
+        .cp-component:last-child {
+            border-right: none;
+        }
+
+        .cp-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            background: var(--k8s-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .cp-name {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .cp-desc {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .arrow-row {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            color: var(--k8s);
+            padding: 0.4rem 0;
+            font-size: 1rem;
+        }
+
+        .node-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .worker-node {
+            border: 1.5px solid var(--gray-2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .worker-header {
+            background: var(--gray-2);
+            padding: 0.5rem 1rem;
+            font-family: var(--font-head);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .worker-body {
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .kubelet-chip {
+            background: rgba(50, 108, 229, 0.1);
+            color: var(--k8s);
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            text-align: center;
+        }
+
+        .pod-chip {
+            background: var(--gray-1);
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            text-align: center;
+            color: var(--text);
+        }
+
+        /* RECONCILIATION */
+        .state-box {
+            border-radius: 13px;
+            padding: 1.1rem 2rem;
+            text-align: center;
+        }
+
+        .state-desired {
+            background: var(--k8s);
+            color: #fff;
+        }
+
+        .state-actual {
+            background: var(--gray-2);
+            color: var(--text);
+        }
+
+        .state-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        .state-value {
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .loop-action {
+            background: var(--dark);
+            color: #fff;
+            border-radius: 10px;
+            padding: 0.85rem 1.5rem;
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-align: center;
+            width: 200px;
+        }
+
+        /* YAML */
+        .yaml-anatomy {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .yaml-code {
+            font-family: var(--font-mono);
+            font-size: clamp(0.82rem, 1.3vw, 1rem);
+            background: var(--dark);
+            color: #e2e8f0;
+            border-radius: 13px;
+            padding: 1.5rem 1.7rem;
+            line-height: 1.75;
+            white-space: pre;
+        }
+
+        .yaml-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            border-radius: 11px;
+            padding: 1.1rem 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .legend-meta {
+            background: rgba(124, 166, 255, 0.1);
+            border-left: 3px solid #7ca6ff;
+        }
+
+        .legend-spec {
+            background: rgba(110, 231, 183, 0.1);
+            border-left: 3px solid #6ee7b7;
+        }
+
+        .legend-status {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 3px solid #fbbf24;
+        }
+
+        .legend-title {
+            font-family: var(--font-head);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .legend-desc {
+            font-family: var(--font-body);
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        /* POD */
+        .pod-outer {
+            border: 2px solid var(--k8s);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 100%;
+            position: relative;
+            background: var(--k8s-light);
+        }
+
+        .pod-outer-label {
+            position: absolute;
+            top: -0.8rem;
+            left: 1.2rem;
+            background: var(--k8s);
+            color: #fff;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            padding: 0.2rem 0.65rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .pod-ip {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--k8s-dark);
+            text-align: right;
+            margin-bottom: 0.75rem;
+        }
+
+        .containers-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .container-box {
+            flex: 1;
+            background: #fff;
+            border-radius: 10px;
+            border: 1.5px solid var(--k8s);
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        .container-label {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .container-name {
+            font-family: var(--font-head);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .port-chip {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            background: var(--k8s-light);
+            color: var(--k8s-dark);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+        }
+
+        .pod-shared {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .shared-item {
+            flex: 1;
+            background: rgba(50, 108, 229, 0.08);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            text-align: center;
+        }
+
+        .shared-label {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--k8s-dark);
+            text-transform: uppercase;
+        }
+
+        .shared-value {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--k8s);
+        }
+
+        /* DEBUG */
+        .debug-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .debug-card {
+            background: var(--dark);
+            border-radius: 11px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .debug-label {
+            font-family: var(--font-head);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--amber);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .debug-cmd {
+            font-family: var(--font-mono);
+            font-size: clamp(0.75rem, 1.1vw, 0.9rem);
+            color: #7ca6ff;
+            word-break: break-all;
+        }
+
+        .code-block {
+            font-family: var(--font-mono);
+            font-size: clamp(0.75rem, 1.1vw, 0.9rem);
+            background: var(--dark);
+            color: #e2e8f0;
+            border-radius: 13px;
+            padding: 1.3rem 1.5rem;
+            line-height: 1.75;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        /* DEPLOYMENT */
+        .deploy-box {
+            border: 2px solid var(--k8s);
+            background: var(--k8s-light);
+            border-radius: 11px;
+            padding: 0.9rem 2.2rem;
+            font-family: var(--font-head);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--k8s-dark);
+        }
+
+        .replicaset-box {
+            border: 2px solid var(--gray-3);
+            background: var(--gray-1);
+            border-radius: 11px;
+            padding: 0.8rem 2rem;
+            font-family: var(--font-head);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .pods-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .mini-pod {
+            background: #fff;
+            border: 1.5px solid var(--k8s);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--k8s-dark);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .mini-pod-status {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            margin: 0 auto;
+        }
+
+        .ver-badge {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            background: var(--k8s);
+            color: #fff;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            align-self: center;
+        }
+
+        /* LABELS */
+        .labels-diagram {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1.5rem;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .label-tag {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 6px;
+            overflow: hidden;
+            align-self: flex-start;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+        }
+
+        .label-key {
+            background: var(--dark);
+            color: #c4b5fd;
+            padding: 0.3rem 0.65rem;
+        }
+
+        .label-sep {
+            background: var(--k8s);
+            color: #fff;
+            padding: 0.3rem 0.2rem;
+            font-weight: 700;
+        }
+
+        .label-val {
+            background: var(--gray-2);
+            color: var(--text);
+            padding: 0.3rem 0.65rem;
+        }
+
+        .selector-box {
+            border: 2px solid var(--k8s);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+            min-width: 185px;
+        }
+
+        .selector-title {
+            font-family: var(--font-head);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--k8s);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .arrow-lr {
+            font-size: 1.5rem;
+            color: var(--k8s);
+        }
+
+        .pods-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .pod-row-item {
+            background: var(--gray-1);
+            border: 1.5px solid var(--gray-2);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pod-match {
+            color: var(--green);
+            font-size: 0.78rem;
+        }
+
+        /* SERVICES */
+        .svc-diagram {
+            display: grid;
+            grid-template-columns: auto auto auto;
+            gap: 0;
+            align-items: center;
+            width: 100%;
+            max-width: 1050px;
+        }
+
+        .svc-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-right: 1.5rem;
+        }
+
+        .svc-box {
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            min-width: 170px;
+        }
+
+        .svc-clusterip {
+            background: var(--k8s);
+            color: #fff;
+        }
+
+        .svc-nodeport {
+            background: var(--dark);
+            color: #fff;
+        }
+
+        .svc-title {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .svc-detail {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            opacity: 0.75;
+        }
+
+        .svc-arrows {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            padding: 0 1.2rem;
+        }
+
+        .svc-arrow-line {
+            width: 60px;
+            height: 2px;
+            background: var(--k8s);
+            position: relative;
+        }
+
+        .svc-arrow-line::after {
+            content: '▶';
+            position: absolute;
+            right: -10px;
+            top: -7px;
+            color: var(--k8s);
+            font-size: 0.75rem;
+        }
+
+        .svc-right {
+            padding-left: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* PROBES */
+        .probe-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .probe-card {
+            border-radius: 13px;
+            border: 1.5px solid var(--gray-2);
+            overflow: hidden;
+        }
+
+        .probe-header {
+            padding: 1rem 1.5rem;
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .probe-liveness .probe-header {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .probe-readiness .probe-header {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
+        .probe-body {
+            padding: 1.1rem 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .probe-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .probe-icon {
+            font-size: 0.9rem;
+            margin-top: 0.1rem;
+        }
+
+        .probe-text {
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+
+        .probe-effect {
+            background: var(--gray-1);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text);
+            margin-top: 0.3rem;
+        }
+
+        /* CONFIGMAP */
+        .cm-diagram {
+            display: grid;
+            grid-template-columns: auto auto auto;
+            gap: 0;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .cm-source {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-right: 2rem;
+        }
+
+        .cm-box {
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .cm-configmap {
+            background: var(--k8s-light);
+            border: 1.5px solid var(--k8s);
+        }
+
+        .cm-secret {
+            background: #fff3cd;
+            border: 1.5px solid var(--amber);
+        }
+
+        .cm-title {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .cm-keys {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .cm-key {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        .cm-arrows {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0 1.5rem;
+            align-items: center;
+        }
+
+        .cm-inject-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .cm-pod {
+            border: 2px solid var(--k8s);
+            border-radius: 14px;
+            padding: 1.3rem;
+            min-width: 240px;
+        }
+
+        .cm-pod-title {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--k8s);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .cm-env-item {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text);
+            background: var(--gray-1);
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.4rem;
+        }
+
+        .cm-vol-item {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            background: rgba(50, 108, 229, 0.07);
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.4rem;
+        }
+
+        /* EXERCISE */
+        .exercise-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .exercise-badge {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            background: var(--k8s);
+            color: #fff;
+            padding: 0.3rem 0.85rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .exercise-title {
+            font-family: var(--font-head);
+            font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+            font-weight: 900;
+            color: var(--text);
+        }
+
+        /* EJERCICIO FINAL */
+        .slide-final-ex {
+            background: var(--dark);
+        }
+
+        .final-ex-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .final-ex-badge {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background: rgba(50, 108, 229, 0.2);
+            color: #7ca6ff;
+            border: 1px solid rgba(50, 108, 229, 0.4);
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .final-ex-title {
+            font-family: var(--font-head);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.05;
+        }
+
+        .final-ex-title span {
+            color: #7ca6ff;
+        }
+
+        .final-ex-desc {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 640px;
+            line-height: 1.6;
+        }
+
+        .final-ex-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .final-ex-step {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+            text-align: center;
+        }
+
+        .final-ex-step-num {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--amber);
+        }
+
+        .final-ex-step-text {
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .final-ex-step-cmd {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: #7ca6ff;
+            background: rgba(50, 108, 229, 0.12);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            margin-top: 0.2rem;
+        }
+
+        /* THANK YOU */
+        .slide-thankyou {
+            background: var(--k8s);
+        }
+
+        .thankyou-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            height: 100%;
+        }
+
+        .thankyou-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            gap: 2rem;
+        }
+
+        .thankyou-sup {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .thankyou-title {
+            font-family: var(--font-head);
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .thankyou-sub {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .thankyou-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .thankyou-link {
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .thankyou-right {
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            gap: 2rem;
+        }
+
+        .qr-box {
+            width: 220px;
+            height: 220px;
+            background: #fff;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.2rem;
+        }
+
+        .qr-placeholder {
+            width: 160px;
+            height: 160px;
+            background: var(--gray-2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 0.4rem;
+            border: 2px dashed var(--gray-3);
+        }
+
+        .qr-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        .qr-title {
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+        }
+
+        .qr-desc {
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.65);
+            text-align: center;
+        }
+
+        .v-line {
+            width: 2px;
+            background: var(--k8s);
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="progress"></div>
+    <div id="nav-dots"></div>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 1: COVER -->
+    <!-- ============================================================ -->
+    <section class="slide slide-cover" data-slide="1">
+        <div class="cover-grid">
+            <div class="cover-left">
+                <div class="k8s-logo-wrap reveal">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Kubernetes_logo_without_workmark.svg"
+                        alt="Kubernetes logo">
+                </div>
+                <p class="cover-tag reveal reveal-delay-1">Workshop</p>
+                <h1 class="cover-title reveal reveal-delay-2">Kubernetes<br>Fundamentals</h1>
+                <p class="cover-subtitle reveal reveal-delay-3">Orquestación de contenedores</p>
+            </div>
+            <div class="cover-right">
+                <div class="cover-stat reveal reveal-delay-2">
+                    <div class="cover-stat-num">CNCF</div>
+                    <div class="cover-stat-label">Presentación de la CNCF Málaga</div>
+                </div>
+                <div class="cover-stat reveal reveal-delay-1">
+                    <div class="cover-stat-num">1h</div>
+                    <div class="cover-stat-label">Duración total del workshop</div>
+                </div>
+
+                <div class="cover-stat reveal reveal-delay-3">
+                    <div class="cover-stat-num">Kind</div>
+                    <div class="cover-stat-label">Cluster local con Docker Desktop</div>
+                </div>
+                <div style="margin-top:1rem;" class="reveal reveal-delay-4">
+                    <span class="cover-badge">kubectl · pods · deployments · services · probes · configmaps</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 2: CNCF -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="2">
+        <div class="slide-header">
+            <span class="slide-num">02</span>
+            <span class="slide-section">Ecosistema</span>
+        </div>
+        <div class="cncf-grid">
+            <div class="cncf-heading-row reveal">
+                <img class="cncf-title-logo" src="https://avatars.githubusercontent.com/u/13455738?s=280&v=4"
+                    alt="CNCF logo">
+                <h2 class="cncf-title">Cloud Native <span>Computing Foundation</span></h2>
+            </div>
+            <p class="cncf-description reveal reveal-delay-1">La CNCF impulsa proyectos open source clave para la
+                infraestructura cloud nativa y ayuda a que tecnologías como Kubernetes evolucionen y lleguen a
+                producción.</p>
+            <div class="cncf-links-qr-row reveal reveal-delay-2">
+                <div class="cncf-links">
+                    <a class="cncf-link" href="https://www.cncf.io/" target="_blank"
+                        rel="noopener">https://www.cncf.io/</a>
+                    <a class="cncf-link" href="https://community.cncf.io/cloud-native-malaga/" target="_blank"
+                        rel="noopener">https://ocgroups.dev/cncf/group/gt3tr94</a>
+                </div>
+                <div class="cncf-qr-wrap">
+                    <img class="cncf-qr" src="QRCNCF.png" alt="QR de CNCF Malaga">
+                    <span class="cncf-qr-caption">Escanea para la comunidad CNCF Malaga</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 3: PROYECTOS CNCF -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="cncf-image">
+        <div class="col-stack" style="align-items:center; justify-content:center; width:100%; max-width:1200px;">
+            <div class="cncf-image-wrap reveal">
+                <img class="cncf-image" src="ProyectosCNCF.png" alt="Proyectos CNCF">
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 3: OBJETIVOS -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="3">
+        <div class="slide-header">
+            <span class="slide-num">03</span>
+            <span class="slide-section">Objetivos</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1200px;">
+            <h2 class="slide-title reveal" style="text-align:center;">Tres pilares del taller</h2>
+            <div class="three-col reveal reveal-delay-1">
+                <div class="keyword-card">
+                    <span class="keyword-num">01</span>
+                    <span class="keyword-word">Entender</span>
+                    <span class="keyword-desc">Arquitectura interna de K8s · Control plane · Reconciliation loop</span>
+                </div>
+                <div class="keyword-card">
+                    <span class="keyword-num">02</span>
+                    <span class="keyword-word">Operar</span>
+                    <span class="keyword-desc">kubectl · YAML · Pods · Deployments · Services · Probes</span>
+                </div>
+                <div class="keyword-card">
+                    <span class="keyword-num">03</span>
+                    <span class="keyword-word">Depurar</span>
+                    <span class="keyword-desc">CrashLoopBackOff · logs · describe · events · exec</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 4: DOCKER DESKTOP -->
+    <!-- ============================================================ -->
+    <section class="slide slide-warning" data-slide="4">
+        <div class="slide-header">
+            <span class="slide-num">04</span>
+            <span class="slide-section">Prerequisitos</span>
+        </div>
+        <div class="docker-layout">
+            <div class="col-stack">
+                <div>
+                    <span class="warning-label">⚡ Acción requerida ahora</span>
+                    <h2 class="slide-title reveal" style="margin-top:0.5rem;">Activa K8s en<br><span>Docker
+                            Desktop</span></h2>
+                </div>
+                <div class="docker-steps reveal reveal-delay-1">
+                    <div class="docker-step">
+                        <span class="docker-step-num">Paso 1</span>
+                        <div>
+                            <div class="docker-step-text">Abre <strong style="color:#fff;">Docker Desktop</strong> y ve
+                                a <strong style="color:#fff;">Settings</strong> (rueda dentada arriba a la derecha)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="docker-step">
+                        <span class="docker-step-num">Paso 2</span>
+                        <div>
+                            <div class="docker-step-text">Navega a la sección <strong
+                                    style="color:#fff;">Kubernetes</strong> en el panel lateral izquierdo</div>
+                        </div>
+                    </div>
+                    <div class="docker-step">
+                        <span class="docker-step-num">Paso 3</span>
+                        <div>
+                            <div class="docker-step-text">Marca <strong style="color:#fff;">Enable Kubernetes</strong> y
+                                haz clic en <strong style="color:#fff;">Apply & Restart</strong></div>
+                        </div>
+                    </div>
+                    <div class="docker-step">
+                        <span class="docker-step-num">Paso 4</span>
+                        <div>
+                            <div class="docker-step-text">Espera ~2 min hasta que el indicador K8s esté en verde. Luego
+                                verifica:</div>
+                            <span class="docker-step-cmd">$ kubectl cluster-info</span>
+                            <span class="docker-step-cmd">$ kubectl get nodes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div
+                    style="font-family:var(--font-head);font-size:0.85rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;">
+                    Vista previa — Docker Desktop Settings</div>
+                <div class="docker-visual">
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.65rem;color:rgba(255,255,255,0.4);margin-bottom:0.3rem;">
+                        Settings</div>
+                    <div class="docker-menu-item">
+                        <span class="docker-menu-icon">⚙️</span>
+                        <span class="docker-menu-label">General</span>
+                    </div>
+                    <div class="docker-menu-item">
+                        <span class="docker-menu-icon">🔗</span>
+                        <span class="docker-menu-label">Resources</span>
+                    </div>
+                    <div class="docker-menu-item docker-menu-active">
+                        <span class="docker-menu-icon">☸️</span>
+                        <span class="docker-menu-label" style="color:#7ca6ff;font-weight:700;">Kubernetes</span>
+                        <div class="docker-toggle"></div>
+                    </div>
+                    <div class="docker-menu-item">
+                        <span class="docker-menu-icon">🐳</span>
+                        <span class="docker-menu-label">Docker Engine</span>
+                    </div>
+                    <div
+                        style="margin-top:0.5rem;background:rgba(50,108,229,0.1);border:1px solid rgba(50,108,229,0.25);border-radius:8px;padding:0.8rem 1rem;">
+                        <div style="font-family:var(--font-mono);font-size:0.68rem;color:#7ca6ff;margin-bottom:0.4rem;">
+                            ✓ Enable Kubernetes</div>
+                        <div style="font-family:var(--font-mono);font-size:0.62rem;color:rgba(255,255,255,0.4);">Show
+                            system containers</div>
+                        <div
+                            style="margin-top:0.75rem;background:var(--k8s);color:#fff;font-family:var(--font-head);font-size:0.78rem;font-weight:700;padding:0.4rem 0.9rem;border-radius:5px;display:inline-block;">
+                            Apply & Restart</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem;">
+                        <div style="width:10px;height:10px;background:var(--green);border-radius:50%;flex-shrink:0;">
+                        </div>
+                        <span
+                            style="font-family:var(--font-mono);font-size:0.7rem;color:rgba(255,255,255,0.6);">Kubernetes
+                            running</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 5: CLUSTER CONCEPT -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="5">
+        <div class="slide-header">
+            <span class="slide-num">05</span>
+            <span class="slide-section">Arquitectura</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1200px;">
+            <h2 class="slide-title reveal">¿Qué es un <span>cluster</span>?</h2>
+            <div style="width:100%;" class="reveal reveal-delay-1">
+                <div class="cluster-outer">
+                    <span class="cluster-label">Cluster Kubernetes</span>
+                    <div class="cluster-inner">
+                        <div class="node-box" style="padding:1.5rem;">
+                            <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Kubernetes_logo_without_workmark.svg"
+                                    style="width:30px;height:30px;" alt="">
+                                <span class="node-title" style="font-size:1.05rem;">Control Plane</span>
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.3rem;">
+                                <span class="node-chip">🌐 API Server</span>
+                                <span class="node-chip">🗄️ etcd</span>
+                                <span class="node-chip">📅 Scheduler</span>
+                                <span class="node-chip">🔁 Controller Mgr</span>
+                            </div>
+                            <p
+                                style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);margin-top:0.8rem;border-top:1px solid var(--gray-2);padding-top:0.6rem;">
+                                Cerebro del cluster — gestiona el estado deseado</p>
+                        </div>
+                        <div class="worker-grid">
+                            <div class="node-box" style="padding:1.1rem;">
+                                <span class="node-title">Worker Node 1</span>
+                                <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                                    <span class="node-chip">kubelet</span>
+                                    <span class="node-chip">kube-proxy</span>
+                                </div>
+                                <span class="node-chip"
+                                    style="background:var(--gray-2);color:var(--text);margin-top:0.3rem;">Pod ·
+                                    Pod</span>
+                            </div>
+                            <div class="node-box" style="padding:1.1rem;">
+                                <span class="node-title">Worker Node 2</span>
+                                <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                                    <span class="node-chip">kubelet</span>
+                                    <span class="node-chip">kube-proxy</span>
+                                </div>
+                                <span class="node-chip"
+                                    style="background:var(--gray-2);color:var(--text);margin-top:0.3rem;">Pod · Pod ·
+                                    Pod</span>
+                            </div>
+                            <div class="node-box" style="padding:1.1rem;">
+                                <span class="node-title">Worker Node 3</span>
+                                <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                                    <span class="node-chip">kubelet</span>
+                                    <span class="node-chip">kube-proxy</span>
+                                </div>
+                                <span class="node-chip"
+                                    style="background:var(--gray-2);color:var(--text);margin-top:0.3rem;">Pod</span>
+                            </div>
+                            <div class="node-box"
+                                style="background:rgba(50,108,229,0.05);border-color:var(--k8s);border-style:dashed;justify-content:center;align-items:center;padding:1.1rem;">
+                                <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--k8s);">+
+                                    escalable</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 6: CONTROL PLANE -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="6">
+        <div class="slide-header">
+            <span class="slide-num">06</span>
+            <span class="slide-section">Arquitectura</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1250px;">
+            <h2 class="slide-title reveal">Control Plane <span>+</span> Nodos</h2>
+            <div style="width:100%;border:2px solid var(--k8s);border-radius:16px;overflow:hidden;"
+                class="reveal reveal-delay-1">
+                <div
+                    style="background:var(--k8s);padding:0.65rem 1.3rem;font-family:var(--font-head);font-size:0.8rem;font-weight:700;color:#fff;letter-spacing:0.1em;text-transform:uppercase;">
+                    Control Plane</div>
+                <div class="cp-diagram" style="border:none;">
+                    <div class="cp-component">
+                        <div class="cp-icon">🌐</div>
+                        <div class="cp-name">API Server</div>
+                        <div class="cp-desc">Punto de entrada único<br>REST · Auth · Validación</div>
+                    </div>
+                    <div class="cp-component">
+                        <div class="cp-icon">🗄️</div>
+                        <div class="cp-name">etcd</div>
+                        <div class="cp-desc">Store clave-valor<br>Estado del cluster</div>
+                    </div>
+                    <div class="cp-component">
+                        <div class="cp-icon">📅</div>
+                        <div class="cp-name">Scheduler</div>
+                        <div class="cp-desc">Asigna Pods a Nodos<br>según recursos</div>
+                    </div>
+                    <div class="cp-component">
+                        <div class="cp-icon">🔁</div>
+                        <div class="cp-name">Controller Mgr</div>
+                        <div class="cp-desc">Reconciliation loop<br>ReplicaSet · Endpoints</div>
+                    </div>
+                </div>
+            </div>
+            <div class="arrow-row reveal reveal-delay-2">
+                <span>↓ kubelet</span>
+                <span>↓ kubelet</span>
+                <span>↓ kubelet</span>
+            </div>
+            <div class="node-row reveal reveal-delay-3" style="max-width:1250px;">
+                <div class="worker-node">
+                    <div class="worker-header">Worker Node 1</div>
+                    <div class="worker-body">
+                        <div class="kubelet-chip">kubelet</div>
+                        <div class="kubelet-chip" style="background:rgba(50,108,229,0.05);">kube-proxy</div>
+                        <div class="pod-chip">Pod A</div>
+                        <div class="pod-chip">Pod B</div>
+                    </div>
+                </div>
+                <div class="worker-node">
+                    <div class="worker-header">Worker Node 2</div>
+                    <div class="worker-body">
+                        <div class="kubelet-chip">kubelet</div>
+                        <div class="kubelet-chip" style="background:rgba(50,108,229,0.05);">kube-proxy</div>
+                        <div class="pod-chip">Pod C</div>
+                    </div>
+                </div>
+                <div class="worker-node">
+                    <div class="worker-header">Worker Node 3</div>
+                    <div class="worker-body">
+                        <div class="kubelet-chip">kubelet</div>
+                        <div class="kubelet-chip" style="background:rgba(50,108,229,0.05);">kube-proxy</div>
+                        <div class="pod-chip">Pod D</div>
+                        <div class="pod-chip">Pod E</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 7: RECONCILIATION LOOP -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="7">
+        <div class="slide-header">
+            <span class="slide-num">07</span>
+            <span class="slide-section">Conceptos core</span>
+        </div>
+        <div class="two-col" style="align-items:center; max-width:1250px;">
+            <div class="col-stack">
+                <h2 class="slide-title reveal">Desired State<br><span>Reconciliation</span></h2>
+                <p class="reveal reveal-delay-1"
+                    style="font-family:var(--font-body);font-size:1rem;color:var(--text-muted);">K8s <strong>nunca
+                        para</strong> de comparar el estado actual con el deseado. Cuando difieren, actúa.</p>
+                <div class="reveal reveal-delay-2"
+                    style="font-family:var(--font-mono);font-size:0.85rem;background:var(--dark);color:#7ca6ff;padding:1.1rem 1.3rem;border-radius:8px;line-height:1.7;">
+                    replicas: 3 <span style="color:#64748b;"># desired</span><br>
+                    <span style="color:#ff5d5d;">running: 2</span> <span style="color:#64748b;"># actual</span><br>
+                    <span style="color:var(--green);">→ crea 1 Pod nuevo</span>
+                </div>
+                <div class="reveal reveal-delay-3" style="display:flex;flex-direction:column;gap:0.6rem;">
+                    <div
+                        style="background:#fff;border-radius:10px;padding:0.85rem 1.2rem;border-left:3px solid var(--k8s);font-family:var(--font-body);font-size:0.9rem;color:var(--text-muted);">
+                        <strong style="color:var(--text);">OBSERVE</strong> — el controller lee el estado actual del
+                        cluster
+                    </div>
+                    <div
+                        style="background:#fff;border-radius:10px;padding:0.85rem 1.2rem;border-left:3px solid var(--amber);font-family:var(--font-body);font-size:0.9rem;color:var(--text-muted);">
+                        <strong style="color:var(--text);">DIFF</strong> — compara con el estado deseado (spec)
+                    </div>
+                    <div
+                        style="background:#fff;border-radius:10px;padding:0.85rem 1.2rem;border-left:3px solid var(--green);font-family:var(--font-body);font-size:0.9rem;color:var(--text-muted);">
+                        <strong style="color:var(--text);">ACT</strong> — toma la acción mínima para convergir
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;"
+                class="reveal reveal-delay-1">
+                <div class="state-box state-desired" style="width:230px;">
+                    <div class="state-label">Desired State (spec)</div>
+                    <div class="state-value">replicas: 3</div>
+                </div>
+                <div
+                    style="display:flex;align-items:center;justify-content:center;padding:0.3rem;color:var(--text-muted);font-size:1.3rem;">
+                    ↕</div>
+                <div class="loop-action" style="width:230px;">
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.65rem;color:var(--amber);margin-bottom:0.3rem;">
+                        Controller Manager</div>
+                    OBSERVE → DIFF → ACT
+                </div>
+                <div
+                    style="display:flex;align-items:center;justify-content:center;padding:0.3rem;color:var(--text-muted);font-size:1.3rem;">
+                    ↕</div>
+                <div class="state-box state-actual" style="width:230px;">
+                    <div class="state-label">Actual State</div>
+                    <div class="state-value" style="color:var(--accent2);">running: 2</div>
+                </div>
+                <div
+                    style="margin-top:0.5rem;background:rgba(34,197,94,0.1);border:1.5px solid var(--green);border-radius:10px;padding:0.75rem 1.5rem;font-family:var(--font-head);font-size:0.9rem;font-weight:700;color:var(--green);text-align:center;width:230px;">
+                    → Crea 1 Pod nuevo
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 8: YAML ANATOMY -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="8">
+        <div class="slide-header">
+            <span class="slide-num">08</span>
+            <span class="slide-section">YAML</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1150px;">
+            <h2 class="slide-title reveal">Anatomía de un <span>YAML</span></h2>
+            <div class="yaml-anatomy reveal reveal-delay-1">
+                <pre class="yaml-code">apiVersion: apps/v1
+kind: Deployment
+<span style="color:#7ca6ff;">metadata:</span>
+  name: my-app
+  namespace: default
+  labels:
+    app: my-app
+
+<span style="color:#6ee7b7;">spec:</span>
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.25
+
+<span style="color:#fbbf24;">status:</span>
+  readyReplicas: 3
+  updatedReplicas: 3</pre>
+                <div class="yaml-legend">
+                    <div class="legend-item legend-meta">
+                        <span class="legend-title" style="color:#7ca6ff;">metadata</span>
+                        <span class="legend-desc">Identidad del recurso: nombre, namespace, labels, annotations. Todo lo
+                            que lo identifica y clasifica.</span>
+                    </div>
+                    <div class="legend-item legend-spec">
+                        <span class="legend-title" style="color:#6ee7b7;">spec</span>
+                        <span class="legend-desc">Estado deseado — lo que <em>tú</em> defines. K8s intentará hacer que
+                            el mundo se parezca a esto.</span>
+                    </div>
+                    <div class="legend-item legend-status">
+                        <span class="legend-title" style="color:#fbbf24;">status</span>
+                        <span class="legend-desc">Estado actual — gestionado y escrito por K8s. Solo lectura para
+                            nosotros.</span>
+                    </div>
+                    <div
+                        style="background:var(--gray-1);border-radius:10px;padding:1rem 1.2rem;border-left:3px solid var(--k8s);">
+                        <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);">Siempre
+                            presentes en todo recurso K8s:</div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text);margin-top:0.35rem;">
+                            apiVersion · kind · metadata · spec</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 9: PODS -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="9">
+        <div class="slide-header">
+            <span class="slide-num">09</span>
+            <span class="slide-section">Pods</span>
+        </div>
+        <div class="two-col" style="align-items:center; max-width:1250px;">
+            <div class="col-stack">
+                <h2 class="slide-title reveal">El <span>Pod</span></h2>
+                <div class="reveal reveal-delay-1" style="display:flex;flex-direction:column;gap:0.9rem;">
+                    <div
+                        style="background:#fff;border-radius:11px;padding:1rem 1.3rem;border-left:3px solid var(--k8s);">
+                        <div style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;">Unidad mínima
+                            desplegable</div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem;">
+                            1 o más contenedores co-localizados en el mismo nodo</div>
+                    </div>
+                    <div
+                        style="background:#fff;border-radius:11px;padding:1rem 1.3rem;border-left:3px solid var(--green);">
+                        <div style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;">Comparten</div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem;">
+                            Red (misma IP) · volúmenes · namespace Linux</div>
+                    </div>
+                    <div
+                        style="background:#fff;border-radius:11px;padding:1rem 1.3rem;border-left:3px solid var(--accent2);">
+                        <div style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;">Efímero</div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem;">
+                            No persiste al fallar → en producción usa Deployment</div>
+                    </div>
+                    <div
+                        style="background:#fff;border-radius:11px;padding:1rem 1.3rem;border-left:3px solid var(--amber);">
+                        <div style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;">Patrón Sidecar
+                        </div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem;">
+                            Container auxiliar junto al principal (logs, proxy, etc.)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal reveal-delay-2" style="display:flex;flex-direction:column;gap:1.2rem;width:100%;">
+                <div class="pod-outer">
+                    <span class="pod-outer-label">Pod: my-pod</span>
+                    <div class="pod-ip">IP: 10.244.0.15</div>
+                    <div class="containers-row">
+                        <div class="container-box">
+                            <span class="container-label">container</span>
+                            <span class="container-name">app</span>
+                            <span class="port-chip">:8080</span>
+                        </div>
+                        <div class="container-box" style="border-style:dashed;border-color:var(--gray-3);">
+                            <span class="container-label">sidecar</span>
+                            <span class="container-name">logger</span>
+                            <span class="port-chip" style="background:var(--gray-2);color:var(--text-muted);">-</span>
+                        </div>
+                    </div>
+                    <div class="pod-shared">
+                        <div class="shared-item">
+                            <div class="shared-label">localhost</div>
+                            <div class="shared-value">Red compartida</div>
+                        </div>
+                        <div class="shared-item">
+                            <div class="shared-label">emptyDir</div>
+                            <div class="shared-value">Vol. compartido</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 10: DEBUGGING -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="10">
+        <div class="slide-header">
+            <span class="slide-num">10</span>
+            <span class="slide-section">Debugging</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1200px;">
+            <h2 class="slide-title reveal">Comandos de <span>depuración</span></h2>
+            <div class="debug-grid reveal reveal-delay-1">
+                <div class="debug-card">
+                    <span class="debug-label">📋 Listar</span>
+                    <span class="debug-cmd">kubectl get pods -n &lt;ns&gt; -o wide</span>
+                    <span class="debug-cmd">kubectl get events --sort-by=.lastTimestamp</span>
+                </div>
+                <div class="debug-card">
+                    <span class="debug-label">🔍 Inspeccionar</span>
+                    <span class="debug-cmd">kubectl describe pod &lt;name&gt;</span>
+                    <span class="debug-cmd">kubectl get pod &lt;name&gt; -o yaml</span>
+                </div>
+                <div class="debug-card">
+                    <span class="debug-label">📄 Logs</span>
+                    <span class="debug-cmd">kubectl logs &lt;pod&gt; -c &lt;container&gt;</span>
+                    <span class="debug-cmd">kubectl logs &lt;pod&gt; --previous</span>
+                </div>
+                <div class="debug-card">
+                    <span class="debug-label">🖥️ Exec</span>
+                    <span class="debug-cmd">kubectl exec -it &lt;pod&gt; -- /bin/sh</span>
+                    <span class="debug-cmd">kubectl port-forward &lt;pod&gt; 8080:80</span>
+                </div>
+            </div>
+            <div class="reveal reveal-delay-2"
+                style="display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;justify-content:center;">
+                <div
+                    style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(34,197,94,0.1);border:1px solid var(--green);color:var(--green);padding:0.45rem 0.9rem;border-radius:6px;">
+                    Running ✓</div>
+                <div
+                    style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(239,68,68,0.1);border:1px solid var(--accent2);color:var(--accent2);padding:0.45rem 0.9rem;border-radius:6px;">
+                    CrashLoopBackOff ✗</div>
+                <div
+                    style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(245,158,11,0.1);border:1px solid var(--amber);color:var(--amber);padding:0.45rem 0.9rem;border-radius:6px;">
+                    Pending ⏳</div>
+                <div
+                    style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(100,116,139,0.1);border:1px solid var(--gray-3);color:var(--text-muted);padding:0.45rem 0.9rem;border-radius:6px;">
+                    OOMKilled 💀</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 11: EXERCISE - CrashLoopBackOff -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="11">
+        <div class="slide-header">
+            <span class="slide-num">11</span>
+            <span class="slide-section">Ejercicio práctico</span>
+        </div>
+        <div class="two-col" style="align-items:flex-start; max-width:1250px;">
+            <div class="col-stack">
+                <div class="exercise-header reveal">
+                    <span class="exercise-badge">Lab 01</span>
+                    <span class="exercise-title">Pod en <span style="color:var(--accent2);">CrashLoop</span></span>
+                </div>
+                <pre class="code-block reveal reveal-delay-1"># 01-pod-crashloop.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-pod
+spec:
+  containers:
+    - name: app
+      image: busybox:latest
+      command: ["sh", "-c", "exit 1"]</pre>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div
+                    style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.5rem;">
+                    Síntomas a identificar</div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <div class="debug-card" style="padding:1rem;">
+                        <span class="debug-label" style="color:var(--accent2);">1 · Aplicar</span>
+                        <span class="debug-cmd">kubectl apply -f 01-pod-crashloop.yaml</span>
+                    </div>
+                    <div class="debug-card" style="padding:1rem;">
+                        <span class="debug-label" style="color:var(--amber);">2 · Observar</span>
+                        <span class="debug-cmd">kubectl get pod broken-pod -w</span>
+                    </div>
+                    <div class="debug-card" style="padding:1rem;">
+                        <span class="debug-label" style="color:var(--green);">3 · Diagnosticar</span>
+                        <span class="debug-cmd">kubectl describe pod broken-pod</span>
+                        <span class="debug-cmd">kubectl logs broken-pod --previous</span>
+                    </div>
+                    <div
+                        style="background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:10px;padding:0.85rem 1rem;">
+                        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--accent2);">Estado
+                            esperado:</div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text);margin-top:0.35rem;">
+                            CrashLoopBackOff → exit code 1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 12: DEPLOYMENTS -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="12">
+        <div class="slide-header">
+            <span class="slide-num">12</span>
+            <span class="slide-section">Deployments</span>
+        </div>
+        <div class="two-col" style="align-items:center; max-width:1250px;">
+            <div class="col-stack">
+                <h2 class="slide-title reveal"><span>Deployment</span><br>→ ReplicaSet → Pods</h2>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:0.6rem;"
+                    class="reveal reveal-delay-1">
+                    <div class="deploy-box">Deployment</div>
+                    <div style="width:2px;height:20px;background:var(--k8s);margin:0 auto;"></div>
+                    <div style="display:flex;gap:1rem;align-items:flex-start;">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+                            <div class="replicaset-box">ReplicaSet v2 <span class="ver-badge">current</span></div>
+                            <div style="width:2px;height:14px;background:var(--gray-3);margin:0 auto;"></div>
+                            <div class="pods-row">
+                                <div class="mini-pod">
+                                    <div class="mini-pod-status"></div>pod-1
+                                </div>
+                                <div class="mini-pod">
+                                    <div class="mini-pod-status"></div>pod-2
+                                </div>
+                                <div class="mini-pod">
+                                    <div class="mini-pod-status"></div>pod-3
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:0;opacity:0.4;">
+                            <div class="replicaset-box" style="font-size:0.78rem;">ReplicaSet v1 <span
+                                    style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-muted);">old</span>
+                            </div>
+                            <div style="width:2px;height:14px;background:var(--gray-3);margin:0 auto;"></div>
+                            <div class="pods-row">
+                                <div class="mini-pod" style="opacity:0.5;">
+                                    <div class="mini-pod-status" style="background:var(--gray-3);"></div>pod
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div
+                    style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;">
+                    Operaciones clave</div>
+                <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                    <div class="debug-card" style="padding:0.9rem 1rem;">
+                        <span class="debug-label" style="color:#7ca6ff;">Escalar</span>
+                        <span class="debug-cmd">kubectl scale deploy app --replicas=5</span>
+                    </div>
+                    <div class="debug-card" style="padding:0.9rem 1rem;">
+                        <span class="debug-label" style="color:#6ee7b7;">Actualizar imagen</span>
+                        <span class="debug-cmd">kubectl set image deploy app app=nginx:1.26</span>
+                    </div>
+                    <div class="debug-card" style="padding:0.9rem 1rem;">
+                        <span class="debug-label" style="color:var(--amber);">Rollback</span>
+                        <span class="debug-cmd">kubectl rollout undo deploy app</span>
+                        <span class="debug-cmd">kubectl rollout history deploy app</span>
+                    </div>
+                    <div class="debug-card" style="padding:0.9rem 1rem;">
+                        <span class="debug-label" style="color:var(--accent2);">Estado</span>
+                        <span class="debug-cmd">kubectl rollout status deploy app</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 13: EXERCISE - DEPLOYMENT -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="13">
+        <div class="slide-header">
+            <span class="slide-num">13</span>
+            <span class="slide-section">Ejercicio práctico</span>
+        </div>
+        <div class="two-col" style="align-items:flex-start; max-width:1250px;">
+            <div class="col-stack">
+                <div class="exercise-header reveal">
+                    <span class="exercise-badge">Lab 02</span>
+                    <span class="exercise-title">Mi primer <span style="color:var(--k8s);">Deployment</span></span>
+                </div>
+                <pre class="code-block reveal reveal-delay-1"># 02-deployment-labels.yaml.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deploy
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+          ports:
+            - containerPort: 80</pre>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.5rem;">Flujo del
+                    ejercicio</div>
+                <div style="display:flex;flex-direction:column;gap:0.55rem;">
+                    <div class="debug-card"><span class="debug-label" style="color:#7ca6ff;">apply</span><span
+                            class="debug-cmd">kubectl apply -f 02-deployment-labels.yaml.yaml</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:var(--green);">verificar</span><span
+                            class="debug-cmd">kubectl get deploy,rs,pods</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:var(--amber);">escalar</span><span
+                            class="debug-cmd">kubectl scale deploy nginx-deploy --replicas=5</span></div>
+                    <div class="debug-card"><span class="debug-label"
+                            style="color:var(--accent2);">actualizar</span><span class="debug-cmd">kubectl set image
+                            deploy nginx-deploy nginx=nginx:1.26</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:#c4b5fd;">rollback</span><span
+                            class="debug-cmd">kubectl rollout undo deploy nginx-deploy</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 14: SERVICES -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="14">
+        <div class="slide-header">
+            <span class="slide-num">14</span>
+            <span class="slide-section">Services</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1200px;">
+            <h2 class="slide-title reveal"><span>Services</span> → Pods</h2>
+            <div class="svc-diagram reveal reveal-delay-1">
+                <div class="svc-left">
+                    <div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-bottom:0.35rem;">
+                            EXTERNA · NodePort</div>
+                        <div class="svc-box svc-nodeport">
+                            <div class="svc-title">NodePort</div>
+                            <div class="svc-detail">:30080 → :80</div>
+                            <div style="font-family:var(--font-mono);font-size:0.62rem;opacity:0.5;margin-top:0.3rem;">
+                                Acceso externo al cluster</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-bottom:0.35rem;">
+                            INTERNA · ClusterIP</div>
+                        <div class="svc-box svc-clusterip">
+                            <div class="svc-title">ClusterIP</div>
+                            <div class="svc-detail">10.96.0.1:80</div>
+                            <div style="font-family:var(--font-mono);font-size:0.62rem;opacity:0.75;margin-top:0.3rem;">
+                                Solo dentro del cluster</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="svc-arrows">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+                        <div class="svc-arrow-line"></div>
+                        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);">selector:
+                        </div>
+                        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--k8s);">app: nginx</div>
+                    </div>
+                    <div class="svc-arrow-line"></div>
+                </div>
+                <div class="svc-right">
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                        Pods con label <span style="color:var(--k8s);">app: nginx</span></div>
+                    <div class="mini-pod"
+                        style="flex-direction:row;gap:0.5rem;width:auto;padding:0.55rem 0.9rem;border-color:var(--k8s);">
+                        <div class="mini-pod-status"></div><span>nginx-pod-1 · 10.244.0.2</span>
+                    </div>
+                    <div class="mini-pod"
+                        style="flex-direction:row;gap:0.5rem;width:auto;padding:0.55rem 0.9rem;border-color:var(--k8s);">
+                        <div class="mini-pod-status"></div><span>nginx-pod-2 · 10.244.0.3</span>
+                    </div>
+                    <div class="mini-pod"
+                        style="flex-direction:row;gap:0.5rem;width:auto;padding:0.55rem 0.9rem;border-color:var(--k8s);">
+                        <div class="mini-pod-status"></div><span>nginx-pod-3 · 10.244.0.4</span>
+                    </div>
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-top:0.5rem;text-align:center;">
+                        Load balancing automático ↕</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 15: EXERCISE - EXPOSE DEPLOYMENT -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="15">
+        <div class="slide-header">
+            <span class="slide-num">15</span>
+            <span class="slide-section">Ejercicio práctico</span>
+        </div>
+        <div class="two-col" style="align-items:flex-start; max-width:1250px;">
+            <div class="col-stack">
+                <div class="exercise-header reveal">
+                    <span class="exercise-badge">Lab 03</span>
+                    <span class="exercise-title">Exponer un <span style="color:var(--k8s);">Deployment</span></span>
+                </div>
+                <pre class="code-block reveal reveal-delay-1"># 03-service-selector.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080</pre>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.5rem;">Verificar
+                    acceso</div>
+                <div style="display:flex;flex-direction:column;gap:0.55rem;">
+                    <div class="debug-card"><span class="debug-label" style="color:#7ca6ff;">apply</span><span
+                            class="debug-cmd">kubectl apply -f 03-service-selector.yaml</span></div>
+                    <div class="debug-card"><span class="debug-label"
+                            style="color:var(--green);">inspeccionar</span><span class="debug-cmd">kubectl get svc
+                            nginx-svc</span><span class="debug-cmd">kubectl describe svc nginx-svc</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:var(--amber);">acceder</span><span
+                            class="debug-cmd">kubectl port-forward svc/nginx-svc 8080:80</span><span
+                            class="debug-cmd">curl localhost:8080</span></div>
+                </div>
+                <div
+                    style="margin-top:0.5rem;background:var(--gray-2);border-radius:10px;padding:1rem;border-left:3px solid var(--amber);">
+                    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--amber);">⚠ Nota Docker
+                        Desktop:</div>
+                    <div
+                        style="font-family:var(--font-body);font-size:0.85rem;color:var(--text-muted);margin-top:0.35rem;">
+                        NodePort puede no ser accesible directamente. Usa <code
+                            style="font-family:var(--font-mono);font-size:0.78rem;background:var(--gray-2);padding:0.1rem 0.3rem;border-radius:3px;">port-forward</code>
+                        para acceso local.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 16: PROBES -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="16">
+        <div class="slide-header">
+            <span class="slide-num">16</span>
+            <span class="slide-section">Health Checks</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1200px;">
+            <h2 class="slide-title reveal">Liveness <span>vs</span> Readiness</h2>
+            <div class="probe-compare reveal reveal-delay-1">
+                <div class="probe-card probe-liveness">
+                    <div class="probe-header">livenessProbe</div>
+                    <div class="probe-body">
+                        <div class="probe-row"><span class="probe-icon">❓</span><span class="probe-text">¿Está vivo el
+                                proceso?</span></div>
+                        <div class="probe-row"><span class="probe-icon">💀</span><span class="probe-text">Fallo → K8s
+                                <strong>reinicia</strong> el contenedor</span></div>
+                        <div class="probe-effect">restart: CrashLoopBackOff posible</div>
+                        <pre class="code-block"
+                            style="padding:0.8rem;font-size:0.68rem;border-radius:8px;margin-top:0.5rem;">livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5</pre>
+                    </div>
+                </div>
+                <div class="probe-card probe-readiness">
+                    <div class="probe-header">readinessProbe</div>
+                    <div class="probe-body">
+                        <div class="probe-row"><span class="probe-icon">❓</span><span class="probe-text">¿Listo para
+                                recibir tráfico?</span></div>
+                        <div class="probe-row"><span class="probe-icon">🚫</span><span class="probe-text">Fallo → K8s
+                                <strong>saca del Service</strong> (no reinicia)</span></div>
+                        <div class="probe-effect">status: Running but not Ready</div>
+                        <pre class="code-block"
+                            style="padding:0.8rem;font-size:0.68rem;border-radius:8px;margin-top:0.5rem;">readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 17: EXERCISE - PROBES -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="17">
+        <div class="slide-header">
+            <span class="slide-num">17</span>
+            <span class="slide-section">Ejercicio práctico</span>
+        </div>
+        <div class="two-col" style="align-items:flex-start; max-width:1250px;">
+            <div class="col-stack">
+                <div class="exercise-header reveal">
+                    <span class="exercise-badge">Lab 04</span>
+                    <span class="exercise-title">Running pero <span style="color:var(--amber);">Not Ready</span></span>
+                </div>
+                <pre class="code-block reveal reveal-delay-1"># 04-readiness-probe.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: not-ready-pod
+spec:
+  containers:
+    - name: app
+      image: nginx:1.25
+      readinessProbe:
+        httpGet:
+          path: /nonexistent
+          port: 80
+        initialDelaySeconds: 2
+        periodSeconds: 3</pre>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.5rem;">Qué
+                    observar</div>
+                <div style="display:flex;flex-direction:column;gap:0.55rem;">
+                    <div class="debug-card"><span class="debug-label" style="color:#7ca6ff;">apply</span><span
+                            class="debug-cmd">kubectl apply -f 04-readiness-probe.yaml</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:var(--amber);">estado</span><span
+                            class="debug-cmd">kubectl get pod not-ready-pod</span></div>
+                </div>
+                <div style="margin-top:1rem;background:var(--dark);border-radius:10px;padding:1rem 1.2rem;">
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                        Output esperado:</div>
+                    <div style="font-family:var(--font-mono);font-size:0.78rem;color:#7ca6ff;">
+                        NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READY&nbsp;&nbsp;STATUS
+                    </div>
+                    <div style="font-family:var(--font-mono);font-size:0.78rem;color:#fff;">
+                        not-ready-pod&nbsp;&nbsp;<span style="color:var(--accent2);">0/1</span>&nbsp;&nbsp;&nbsp;Running
+                    </div>
+                </div>
+                <div
+                    style="background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.3);border-radius:10px;padding:0.85rem 1rem;margin-top:0.5rem;">
+                    <div style="font-family:var(--font-body);font-size:0.88rem;color:var(--text);">Pod
+                        <strong>Running</strong> pero <strong>0/1 Ready</strong> → excluido del Service. El proceso está
+                        vivo pero la readiness probe falla.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 18: CONFIGMAPS & SECRETS -->
+    <!-- ============================================================ -->
+    <section class="slide slide-light" data-slide="18">
+        <div class="slide-header">
+            <span class="slide-num">18</span>
+            <span class="slide-section">Configuración</span>
+        </div>
+        <div class="col-stack" style="align-items:center; width:100%; max-width:1200px;">
+            <h2 class="slide-title reveal"><span>ConfigMap</span> & Secret → Pod</h2>
+            <div class="cm-diagram reveal reveal-delay-1">
+                <div class="cm-source">
+                    <div class="cm-box cm-configmap">
+                        <div class="cm-title" style="color:var(--k8s-dark);">ConfigMap</div>
+                        <div class="cm-keys">
+                            <div class="cm-key">API_URL: "https://api.app.com"</div>
+                            <div class="cm-key">LOG_LEVEL: "info"</div>
+                            <div class="cm-key">MAX_CONN: "100"</div>
+                        </div>
+                    </div>
+                    <div class="cm-box cm-secret">
+                        <div class="cm-title" style="color:#92400e;">Secret</div>
+                        <div class="cm-keys">
+                            <div class="cm-key" style="color:#92400e;">DB_PASSWORD: ****</div>
+                            <div class="cm-key" style="color:#92400e;">API_KEY: ****</div>
+                        </div>
+                        <div
+                            style="font-family:var(--font-mono);font-size:0.62rem;color:var(--amber);margin-top:0.3rem;">
+                            base64 encoded</div>
+                    </div>
+                </div>
+                <div class="cm-arrows">
+                    <div>
+                        <div class="svc-arrow-line" style="width:50px;"></div>
+                        <div class="cm-inject-label">env vars</div>
+                    </div>
+                    <div>
+                        <div class="svc-arrow-line" style="width:50px;"></div>
+                        <div class="cm-inject-label">volumeMount</div>
+                    </div>
+                </div>
+                <div class="cm-pod">
+                    <div class="cm-pod-title">Pod: frontend</div>
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-bottom:0.3rem;">
+                        ENV VARS</div>
+                    <div class="cm-env-item">API_URL=https://api.app.com</div>
+                    <div class="cm-env-item">LOG_LEVEL=info</div>
+                    <div class="cm-env-item" style="background:rgba(245,158,11,0.1);">DB_PASSWORD=***</div>
+                    <div
+                        style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-top:0.6rem;margin-bottom:0.3rem;">
+                        VOLUMEN</div>
+                    <div class="cm-vol-item">/etc/config/app.properties</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 19: EXERCISE - CONFIGMAP -->
+    <!-- ============================================================ -->
+    <section class="slide slide-gray" data-slide="19">
+        <div class="slide-header">
+            <span class="slide-num">19</span>
+            <span class="slide-section">Ejercicio práctico</span>
+        </div>
+        <div class="two-col" style="align-items:flex-start; max-width:1250px;">
+            <div class="col-stack">
+                <div class="exercise-header reveal">
+                    <span class="exercise-badge">Lab 05</span>
+                    <span class="exercise-title">ConfigMap para <span style="color:var(--k8s);">frontend</span></span>
+                </div>
+                <pre class="code-block reveal reveal-delay-1"># 05-configmap-frontend.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+data:
+  API_URL: "https://backend-svc:8080"
+  FEATURE_DARK_MODE: "true"
+  MAX_ITEMS: "50"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend-pod
+spec:
+  containers:
+    - name: frontend
+      image: nginx:1.25
+      envFrom:
+        - configMapRef:
+            name: frontend-config</pre>
+            </div>
+            <div class="col-stack reveal reveal-delay-2">
+                <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.5rem;">Verificar
+                    inyección</div>
+                <div style="display:flex;flex-direction:column;gap:0.55rem;">
+                    <div class="debug-card"><span class="debug-label" style="color:#7ca6ff;">apply</span><span
+                            class="debug-cmd">kubectl apply -f 05-configmap-frontend.yaml</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:var(--green);">verificar
+                            CM</span><span class="debug-cmd">kubectl describe cm frontend-config</span></div>
+                    <div class="debug-card"><span class="debug-label" style="color:var(--amber);">verificar
+                            Pod</span><span class="debug-cmd">kubectl exec -it frontend-pod -- env | grep API</span>
+                    </div>
+                    <div class="debug-card"><span class="debug-label" style="color:#c4b5fd;">actualizar</span><span
+                            class="debug-cmd">kubectl edit cm frontend-config</span><span
+                            style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);"># Pod
+                            necesita reinicio para ver cambios</span></div>
+                </div>
+                <div
+                    style="margin-top:0.5rem;background:#fff;border-radius:10px;padding:1rem;border-left:3px solid var(--k8s);">
+                    <div
+                        style="font-family:var(--font-head);font-size:0.85rem;font-weight:700;color:var(--k8s);margin-bottom:0.3rem;">
+                        Pro tip</div>
+                    <div style="font-family:var(--font-body);font-size:0.85rem;color:var(--text-muted);">Usa <code
+                            style="font-family:var(--font-mono);font-size:0.78rem;background:var(--gray-2);padding:0.1rem 0.3rem;border-radius:3px;">envFrom.configMapRef</code>
+                        para inyectar todas las claves de golpe.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 20: EJERCICIO FINAL -->
+    <!-- ============================================================ -->
+    <section class="slide slide-final-ex" data-slide="20">
+        <div class="final-ex-content reveal">
+            <span class="final-ex-badge">Ejercicio Final</span>
+            <h2 class="final-ex-title">Despliega una app<br><span>completa</span></h2>
+            <p class="final-ex-desc">Combina todo lo aprendido: Deployment + Service + ConfigMap + Probes. El reto final
+                integra los 5 conceptos del taller en un único flujo de despliegue.</p>
+            <div class="final-ex-grid reveal reveal-delay-1">
+                <div class="final-ex-step">
+                    <span class="final-ex-step-num">01 · ConfigMap</span>
+                    <span class="final-ex-step-text">Crea un ConfigMap con las variables de entorno de tu app</span>
+                    <span class="final-ex-step-cmd">kubectl apply -f configmap.yaml</span>
+                </div>
+                <div class="final-ex-step">
+                    <span class="final-ex-step-num">02 · Deployment</span>
+                    <span class="final-ex-step-text">Despliega la app con 3 réplicas, probes y referencia al
+                        ConfigMap</span>
+                    <span class="final-ex-step-cmd">kubectl apply -f deployment.yaml</span>
+                </div>
+                <div class="final-ex-step">
+                    <span class="final-ex-step-num">03 · Service</span>
+                    <span class="final-ex-step-text">Expón el Deployment con un ClusterIP y accede vía
+                        port-forward</span>
+                    <span class="final-ex-step-cmd">kubectl apply -f service.yaml</span>
+                </div>
+                <div class="final-ex-step">
+                    <span class="final-ex-step-num">04 · Escalar</span>
+                    <span class="final-ex-step-text">Sube las réplicas a 5 y observa el rolling update</span>
+                    <span class="final-ex-step-cmd">kubectl scale deploy app --replicas=5</span>
+                </div>
+                <div class="final-ex-step">
+                    <span class="final-ex-step-num">05 · Romper & Arreglar</span>
+                    <span class="final-ex-step-text">Introduce un error a propósito y diagnostica con describe +
+                        logs</span>
+                    <span class="final-ex-step-cmd">kubectl describe pod &lt;name&gt;</span>
+                </div>
+                <div class="final-ex-step">
+                    <span class="final-ex-step-num">06 · Rollback</span>
+                    <span class="final-ex-step-text">Haz rollback a la versión anterior y verifica el historial</span>
+                    <span class="final-ex-step-cmd">kubectl rollout undo deploy app</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 21: THANK YOU -->
+    <!-- ============================================================ -->
+    <section class="slide slide-thankyou" data-slide="21">
+        <div class="thankyou-grid">
+            <div class="thankyou-left">
+                <div>
+                    <p class="thankyou-sup reveal">Workshop Kubernetes Fundamentals</p>
+                    <h2 class="thankyou-title reveal reveal-delay-1">¡Gracias<br>por<br>asistir!</h2>
+                </div>
+                <p class="thankyou-sub reveal reveal-delay-2">Ahora tienes las bases para desplegar, operar y depurar
+                    aplicaciones en Kubernetes. El siguiente paso: Helm, Ingress y RBAC.</p>
+                <div class="thankyou-links reveal reveal-delay-3">
+                    <div class="thankyou-link">📖 <span>kubernetes.io/docs</span></div>
+                    <div class="thankyou-link">☁️ <span>cncf.io/projects</span></div>
+                    <div class="thankyou-link">🎮 <span>killercoda.com — labs interactivos</span></div>
+                </div>
+            </div>
+            <div class="thankyou-right reveal reveal-delay-2">
+                <div>
+                    <p class="qr-title">¿Te ha gustado el taller?</p>
+                    <p class="qr-desc">Escanea el QR y deja tu feedback.<br>¡Tu opinión mejora el siguiente!</p>
+                </div>
+                <div class="qr-box">
+                    <img src="QRFeedback.png" alt="QR de feedback"
+                        style="width:250px;height:250px;object-fit:contain;border-radius:8px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const navDots = document.getElementById('nav-dots');
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.addEventListener('click', () => slides[i].scrollIntoView({ behavior: 'smooth' }));
+            navDots.appendChild(dot);
+        });
+
+        const updateProgress = () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progress').style.width = progress + '%';
+            let activeIdx = 0;
+            slides.forEach((slide, i) => {
+                const rect = slide.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2) activeIdx = i;
+            });
+            document.querySelectorAll('.dot').forEach((dot, i) => dot.classList.toggle('active', i === activeIdx));
+        };
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        updateProgress();
+
+        const revealEls = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+        }, { threshold: 0.1 });
+        revealEls.forEach(el => observer.observe(el));
+
+        document.addEventListener('keydown', (e) => {
+            const current = Math.round(window.scrollY / window.innerHeight);
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                slides[Math.min(current + 1, totalSlides - 1)].scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                slides[Math.max(current - 1, 0)].scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+
+</html>

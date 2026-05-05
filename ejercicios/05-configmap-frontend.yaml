@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+data:
+  API_URL: "https://backend-svc:8080"
+  FEATURE_DARK_MODE: "true"
+  MAX_ITEMS: "50"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend-pod
+spec:
+  containers:
+    - name: frontend
+      image: nginx:1.25
+      envFrom:
+        - configMapRef:
+            name: frontend-config

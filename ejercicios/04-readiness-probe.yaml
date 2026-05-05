@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: not-ready-pod
+spec:
+  containers:
+    - name: app
+      image: nginx
+      readinessProbe:
+        httpGet:
+          path: /nonexistent
+          port: 80
+        initialDelaySeconds: 2
+        periodSeconds: 3
