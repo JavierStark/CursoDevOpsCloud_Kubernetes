@@ -1693,6 +1693,221 @@
             margin-top: 0.2rem;
         }
 
+        /* CERTIFICATIONS */
+        .slide-certifications {
+            background: linear-gradient(135deg, #1a3f9c 0%, #2a5cdb 100%);
+        }
+
+        .cert-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            text-align: center;
+            max-width: 1100px;
+        }
+
+        .cert-badge {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .cert-title {
+            font-family: var(--font-head);
+            font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.05;
+        }
+
+        .cert-title span {
+            color: #ffd700;
+        }
+
+        .cert-desc {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.75);
+            max-width: 700px;
+            line-height: 1.5;
+        }
+
+        .cert-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .cert-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            align-items: flex-start;
+            text-align: left;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cert-item.featured {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+            transform: scale(1.05);
+        }
+
+        .cert-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-4px);
+        }
+
+        .cert-item.featured:hover {
+            transform: scale(1.05) translateY(-4px);
+        }
+
+        .cert-item-badge {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .cert-item-icon {
+            font-size: 1.6rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .cert-item-title {
+            font-family: var(--font-head);
+            font-size: 1rem;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .cert-item-desc {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+        }
+
+        .cert-item-meta {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.4rem;
+            padding-top: 0.4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* EXTRAS */
+        .slide-extras {
+            background: linear-gradient(135deg, var(--dark) 0%, rgba(15, 17, 23, 0.95) 100%);
+        }
+
+        .extras-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            text-align: center;
+            max-width: 1100px;
+        }
+
+        .extras-badge {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .extras-title {
+            font-family: var(--font-head);
+            font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.05;
+        }
+
+        .extras-title span {
+            color: #86efac;
+        }
+
+        .extras-desc {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 700px;
+            line-height: 1.5;
+        }
+
+        .extras-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.9rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .extras-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-start;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .extras-item:hover {
+            background: rgba(34, 197, 94, 0.08);
+            border-color: rgba(34, 197, 94, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .extras-item-icon {
+            font-size: 1.4rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .extras-item-title {
+            font-family: var(--font-head);
+            font-size: 0.95rem;
+            color: #86efac;
+            font-weight: 700;
+        }
+
+        .extras-item-desc {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.4;
+        }
+
         /* THANK YOU */
         .slide-thankyou {
             background: var(--k8s);
@@ -2706,13 +2921,11 @@ kind: Service
 metadata:
   name: nginx-svc
 spec:
-  type: NodePort
   selector:
     app: nginx
   ports:
     - port: 80
-      targetPort: 80
-      nodePort: 30080</pre>
+      targetPort: 80</pre>
             </div>
             <div class="col-stack reveal reveal-delay-2">
                 <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.5rem;">Verificar
@@ -2733,7 +2946,7 @@ spec:
                         Desktop:</div>
                     <div
                         style="font-family:var(--font-body);font-size:0.85rem;color:var(--text-muted);margin-top:0.35rem;">
-                        NodePort puede no ser accesible directamente. Usa <code
+                        Service no es accesible directamente. Usa <code
                             style="font-family:var(--font-mono);font-size:0.78rem;background:var(--gray-2);padding:0.1rem 0.3rem;border-radius:3px;">port-forward</code>
                         para acceso local.</div>
                 </div>
@@ -2975,9 +3188,101 @@ spec:
     </section>
 
     <!-- ============================================================ -->
-    <!-- SLIDE 20: EJERCICIO FINAL -->
+    <!-- SLIDE 20: EXTRAS -->
     <!-- ============================================================ -->
-    <section class="slide slide-final-ex" data-slide="20">
+    <section class="slide slide-extras" data-slide="20">
+        <div class="extras-content reveal">
+            <span class="extras-badge">Temas Complementarios</span>
+            <h2 class="extras-title">Más allá de lo<br><span>fundamental</span></h2>
+            <p class="extras-desc">Una vez domines lo básico, estos temas te llevarán al siguiente nivel. Fundamentos
+                sobre tooling, persistencia y acceso.</p>
+            <div class="extras-grid reveal reveal-delay-1">
+                <div class="extras-item">
+                    <div class="extras-item-icon">📦</div>
+                    <div class="extras-item-title">Helm</div>
+                    <div class="extras-item-desc">Gestor de paquetes para Kubernetes. Define, instala y versiona tus
+                        apps con templates reutilizables.</div>
+                </div>
+                <div class="extras-item">
+                    <div class="extras-item-icon">💾</div>
+                    <div class="extras-item-title">Volumes &amp; Storage</div>
+                    <div class="extras-item-desc">Persistencia de datos más allá de la vida del Pod. PersistentVolume
+                        (PV) y PersistentVolumeClaim (PVC).</div>
+                </div>
+                <div class="extras-item">
+                    <div class="extras-item-icon">🌐</div>
+                    <div class="extras-item-title">Ingress</div>
+                    <div class="extras-item-desc">Enrutamiento HTTP/HTTPS avanzado, dominios personalizados, SSL/TLS y
+                        balanceo de carga L7.</div>
+                </div>
+                <div class="extras-item">
+                    <div class="extras-item-icon">🔐</div>
+                    <div class="extras-item-title">RBAC &amp; Seguridad</div>
+                    <div class="extras-item-desc">Control de acceso basado en roles, políticas de red y gestión de
+                        permisos en el cluster.</div>
+                </div>
+                <div class="extras-item">
+                    <div class="extras-item-icon">📊</div>
+                    <div class="extras-item-title">Monitoring &amp; Logging</div>
+                    <div class="extras-item-desc">Prometheus, Grafana, ELK Stack. Observabilidad completa para debug y
+                        alertas en producción.</div>
+                </div>
+                <div class="extras-item">
+                    <div class="extras-item-icon">🔄</div>
+                    <div class="extras-item-title">GitOps &amp; CI/CD</div>
+                    <div class="extras-item-desc">ArgoCD, Flux. Sincronización automática de estados, deploys
+                        declarativos y control de versiones.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 21: KUBERNETES CERTIFICATIONS -->
+    <!-- ============================================================ -->
+    <section class="slide slide-certifications" data-slide="21">
+        <div class="cert-content reveal">
+            <span class="cert-badge">Validación de Skills</span>
+            <h2 class="cert-title">Certificaciones<br><span>Kubernetes</span></h2>
+            <p class="cert-desc">Valida tu expertise con las certificaciones oficiales de la CNCF. Demuestra tu dominio
+                de Kubernetes en entornos de producción.</p>
+            <div class="cert-grid reveal reveal-delay-1">
+                <div class="cert-item featured">
+                    <span class="cert-item-badge">⭐ RECOMENDADA</span>
+                    <div class="cert-item-icon">🎯</div>
+                    <div class="cert-item-title">CKAD</div>
+                    <div class="cert-item-desc">Certified Kubernetes Application Developer. Domina el desarrollo y
+                        deployment de aplicaciones en Kubernetes.</div>
+                    <div class="cert-item-meta">
+                        <div>⏱️ 2 horas | 📚 Hands-on en terminal</div>
+                    </div>
+                </div>
+                <div class="cert-item">
+                    <div class="cert-item-icon">🏗️</div>
+                    <div class="cert-item-title">CKA</div>
+                    <div class="cert-item-desc">Certified Kubernetes Administrator. Administra, mantén y
+                        troubleshoot clusters de Kubernetes.</div>
+                    <div class="cert-item-meta">
+                        <div>⏱️ 3 horas | 📚 Infraestructura y operación</div>
+                    </div>
+                </div>
+                <div class="cert-item">
+                    <div class="cert-item-icon">🔐</div>
+                    <div class="cert-item-title">CKS</div>
+                    <div class="cert-item-desc">Certified Kubernetes Security Specialist. Asegura y hardening
+                        de clusters y aplicaciones.</div>
+                    <div class="cert-item-meta">
+                        <div>⏱️ 2 horas | 📚 Seguridad avanzada</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SLIDE 22: EJERCICIO FINAL -->
+    <!-- ============================================================ -->
+    <section class="slide slide-final-ex" data-slide="22">
         <div class="final-ex-content reveal">
             <span class="final-ex-badge">Ejercicio Final</span>
             <h2 class="final-ex-title">Despliega una app<br><span>completa</span></h2>
@@ -3022,9 +3327,9 @@ spec:
     </section>
 
     <!-- ============================================================ -->
-    <!-- SLIDE 21: THANK YOU -->
+    <!-- SLIDE 23: THANK YOU -->
     <!-- ============================================================ -->
-    <section class="slide slide-thankyou" data-slide="21">
+    <section class="slide slide-thankyou" data-slide="23">
         <div class="thankyou-grid">
             <div class="thankyou-left">
                 <div>
